@@ -7,6 +7,31 @@ import Image from 'next/image'
 import { registerUser } from './actions'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 
+function compressImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new window.Image()
+    img.onload = () => {
+      const MAX = 800
+      let { width, height } = img
+      if (width > height) {
+        if (width > MAX) { height = Math.round(height * MAX / width); width = MAX }
+      } else {
+        if (height > MAX) { width = Math.round(width * MAX / height); height = MAX }
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(
+        (blob) => resolve(new File([blob!], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })),
+        'image/jpeg',
+        0.75
+      )
+    }
+    img.src = URL.createObjectURL(file)
+  })
+}
+
 export default function RegisterForm() {
   const router = useRouter()
   const { t } = useLanguage()
@@ -37,8 +62,9 @@ export default function RegisterForm() {
       return
     }
 
+    const compressed = await compressImage(file)
     const formData = new FormData(form)
-    formData.set('avatar', file)
+    formData.set('avatar', compressed)
 
     let result: { success?: true; error?: string }
     try {
