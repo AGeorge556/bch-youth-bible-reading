@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
+import { registerUser } from './actions'
 
 export default function RegisterForm() {
   const router = useRouter()
@@ -24,11 +25,9 @@ export default function RegisterForm() {
     setError('')
     setLoading(true)
 
-    const form = new FormData(e.currentTarget)
-    const email = form.get('email') as string
-    const password = form.get('password') as string
-    const full_name = form.get('full_name') as string
-    const grade = form.get('grade') as string
+    const form = e.currentTarget
+    const email = (form.elements.namedItem('email') as HTMLInputElement).value
+    const password = (form.elements.namedItem('password') as HTMLInputElement).value
     const file = fileRef.current?.files?.[0]
 
     if (!file) {
@@ -37,36 +36,23 @@ export default function RegisterForm() {
       return
     }
 
-    const supabase = createClient()
+    const formData = new FormData(form)
+    formData.set('avatar', file)
 
-    const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
-    if (signUpError || !data.user) {
-      setError(signUpError?.message ?? 'Registration failed')
+    const result = await registerUser(formData)
+
+    if (result.error) {
+      setError(result.error)
       setLoading(false)
       return
     }
 
-    const ext = file.name.split('.').pop()
-    const { data: upload, error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(`${data.user.id}.${ext}`, file, { upsert: true })
+    const supabase = createClient()
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
-    let profile_picture_url: string | null = null
-    if (!uploadError && upload) {
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(upload.path)
-      profile_picture_url = urlData.publicUrl
-    }
-
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: data.user.id,
-      full_name,
-      grade,
-      profile_picture_url,
-    })
-
-    if (profileError) {
-      setError(profileError.message)
-      setLoading(false)
+    if (signInError) {
+      setError('Account created but sign-in failed. Please log in manually.')
+      router.push('/login')
       return
     }
 
@@ -97,6 +83,7 @@ export default function RegisterForm() {
         <input
           ref={fileRef}
           type="file"
+          name="avatar"
           accept="image/*"
           className="hidden"
           onChange={handleFileChange}
