@@ -40,7 +40,15 @@ export default function RegisterForm() {
     const formData = new FormData(form)
     formData.set('avatar', file)
 
-    const result = await registerUser(formData)
+    let result: { success?: true; error?: string }
+    try {
+      result = await registerUser(formData)
+    } catch {
+      setError('An unexpected error occurred. Please try again.')
+      setLoading(false)
+      return
+    }
+
     if (result.error) {
       setError(result.error)
       setLoading(false)
@@ -50,11 +58,13 @@ export default function RegisterForm() {
     const supabase = createClient()
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
     if (signInError) {
+      setLoading(false)
       setError('Account created but sign-in failed. Please log in manually.')
       router.push('/login')
       return
     }
 
+    setLoading(false)
     router.refresh()
     router.push('/dashboard')
   }
