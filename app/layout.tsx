@@ -1,9 +1,13 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist } from 'next/font/google'
+import { Alexandria } from 'next/font/google'
 import './globals.css'
 import { LanguageProvider } from '@/lib/i18n/LanguageContext'
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
+const alexandria = Alexandria({
+  subsets: ['latin', 'arabic'],
+  weight: ['400', '500', '600', '700', '800', '900'],
+  variable: '--font-alexandria',
+})
 
 export const metadata: Metadata = {
   title: 'BCH Youth Bible Reading',
@@ -18,7 +22,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geist.variable} h-full`}>
+    <html lang="en" className={`${alexandria.variable} h-full`}>
       <body className="h-full bg-background text-foreground antialiased">
         <LanguageProvider>{children}</LanguageProvider>
       </body>

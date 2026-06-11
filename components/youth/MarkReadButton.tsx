@@ -1,10 +1,12 @@
-﻿'use client'
+'use client'
 import { useState } from 'react'
 import { markChapterRead, type MarkChapterReadResult } from '@/lib/actions/reading'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Props { chapterId: string; isReadInitially: boolean }
 
 export default function MarkReadButton({ chapterId, isReadInitially }: Props) {
+  const { t } = useLanguage()
   const [isRead, setIsRead] = useState(isReadInitially)
   const [pending, setPending] = useState(false)
   const [badge, setBadge] = useState<string | null>(null)
@@ -39,17 +41,17 @@ export default function MarkReadButton({ chapterId, isReadInitially }: Props) {
         }
       >
         {isRead ? (
-          <><span className="text-lg">✓</span> Chapter read!</>
+          <><span className="text-lg">✓</span> {t('chapter_read')}</>
         ) : pending ? (
-          'Saving…'
+          t('saving')
         ) : (
-          <><span className="text-base">📖</span> I read this! ✓</>
+          <><span className="text-base">📖</span> {t('i_read_this')}</>
         )}
       </button>
       <input type="checkbox" checked={isRead} onChange={handleChange} disabled={isRead || pending} className="hidden" aria-hidden="true" />
       {badge && (
         <div className="rounded-2xl px-4 py-3 text-sm font-medium" style={{ background: 'linear-gradient(135deg, #fffbeb, #fef3c7)', border: '1.5px solid #f59e0b', color: '#92400e' }}>
-          🏆 Amazing! You finished <strong>{badge}</strong> and earned the Finished Book badge!
+          🏆 {t('finished_book_prefix')} <strong>{badge}</strong> {t('finished_book_suffix')}
         </div>
       )}
     </div>
