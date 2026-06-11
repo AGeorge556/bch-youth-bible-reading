@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
 import { registerUser } from './actions'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 
 export default function RegisterForm() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
@@ -16,8 +18,7 @@ export default function RegisterForm() {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    const url = URL.createObjectURL(file)
-    setPreview(url)
+    setPreview(URL.createObjectURL(file))
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -31,7 +32,7 @@ export default function RegisterForm() {
     const file = fileRef.current?.files?.[0]
 
     if (!file) {
-      setError('Profile picture is required')
+      setError(t('profile_picture_required'))
       setLoading(false)
       return
     }
@@ -40,7 +41,6 @@ export default function RegisterForm() {
     formData.set('avatar', file)
 
     const result = await registerUser(formData)
-
     if (result.error) {
       setError(result.error)
       setLoading(false)
@@ -49,7 +49,6 @@ export default function RegisterForm() {
 
     const supabase = createClient()
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-
     if (signInError) {
       setError('Account created but sign-in failed. Please log in manually.')
       router.push('/login')
@@ -68,7 +67,6 @@ export default function RegisterForm() {
         </div>
       )}
 
-      {/* Profile picture */}
       <div className="flex flex-col items-center gap-3">
         <div
           onClick={() => fileRef.current?.click()}
@@ -77,78 +75,44 @@ export default function RegisterForm() {
           {preview ? (
             <Image src={preview} alt="Preview" width={80} height={80} className="w-full h-full object-cover" />
           ) : (
-            <span className="text-xs text-muted-foreground text-center px-2">Tap to add photo</span>
+            <span className="text-xs text-muted-foreground text-center px-2">{t('tap_to_add_photo')}</span>
           )}
         </div>
-        <input
-          ref={fileRef}
-          type="file"
-          name="avatar"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-        <p className="text-xs text-muted-foreground">Profile picture (required)</p>
+        <input ref={fileRef} type="file" name="avatar" accept="image/*" className="hidden" onChange={handleFileChange} />
+        <p className="text-xs text-muted-foreground">{t('profile_picture')}</p>
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="full_name" className="text-sm font-medium">Full Name</label>
-        <input
-          id="full_name"
-          name="full_name"
-          type="text"
-          required
-          autoComplete="name"
+        <label htmlFor="full_name" className="text-sm font-medium">{t('full_name')}</label>
+        <input id="full_name" name="full_name" type="text" required autoComplete="name"
           className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          placeholder="Your full name"
-        />
+          placeholder="Your full name" />
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="grade" className="text-sm font-medium">Grade / School Year</label>
-        <input
-          id="grade"
-          name="grade"
-          type="text"
-          required
+        <label htmlFor="grade" className="text-sm font-medium">{t('grade')}</label>
+        <input id="grade" name="grade" type="text" required
           className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          placeholder="e.g. Grade 10 or Year 2"
-        />
+          placeholder="e.g. Grade 10 or Year 2" />
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="email" className="text-sm font-medium">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          autoComplete="email"
+        <label htmlFor="email" className="text-sm font-medium">{t('email')}</label>
+        <input id="email" name="email" type="email" required autoComplete="email"
           className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          placeholder="you@example.com"
-        />
+          placeholder="you@example.com" />
       </div>
 
       <div className="space-y-1">
-        <label htmlFor="password" className="text-sm font-medium">Password</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          autoComplete="new-password"
-          minLength={8}
+        <label htmlFor="password" className="text-sm font-medium">{t('password')}</label>
+        <input id="password" name="password" type="password" required autoComplete="new-password" minLength={8}
           className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          placeholder="Min. 8 characters"
-        />
+          placeholder="Min. 8 characters" />
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
-      >
-        {loading ? 'Creating account…' : 'Create account'}
+      <button type="submit" disabled={loading}
+        className="w-full rounded-2xl px-4 py-2.5 text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity btn-gradient">
+        {loading ? t('creating_account') : t('create_account')}
       </button>
     </form>
   )

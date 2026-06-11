@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createBook, updateBook, archiveBook, unarchiveBook } from '@/app/(admin)/admin/actions/books'
+import { BIBLE_BOOKS } from '@/lib/bible-books'
 
 interface Props {
   mode: 'create' | 'edit'
@@ -51,9 +52,15 @@ export default function BookForm({ mode, book }: Props) {
       )}
       <div className="space-y-1">
         <label htmlFor="book-name" className="text-sm font-medium">Book Name</label>
-        <input id="book-name" name="name" type="text" required defaultValue={book?.name}
-          className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          placeholder="e.g. Genesis" />
+        <select id="book-name" name="name" required defaultValue={book?.name ?? ''}
+          className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+          {mode === 'create' && (
+            <option value="" disabled>Select a book…</option>
+          )}
+          {BIBLE_BOOKS.map((b) => (
+            <option key={b} value={b}>{b}</option>
+          ))}
+        </select>
       </div>
       {mode === 'edit' && (
         <div className="space-y-1">
