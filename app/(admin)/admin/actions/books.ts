@@ -52,3 +52,11 @@ export async function unarchiveBook(bookId: string): Promise<{ error?: string }>
   revalidatePath('/admin/books/' + bookId)
   return {}
 }
+
+export async function deleteBook(bookId: string): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const { error } = await supabase.from('books').delete().eq('id', bookId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/books')
+  return {}
+}

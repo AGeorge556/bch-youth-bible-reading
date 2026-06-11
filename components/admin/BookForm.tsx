@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBook, updateBook, archiveBook, unarchiveBook } from '@/app/(admin)/admin/actions/books'
+import { createBook, updateBook, archiveBook, unarchiveBook, deleteBook } from '@/app/(admin)/admin/actions/books'
 import { BIBLE_BOOKS } from '@/lib/bible-books'
 
 interface Props {
@@ -30,6 +30,14 @@ export default function BookForm({ mode, book }: Props) {
       router.refresh()
       setLoading(false)
     }
+  }
+
+  async function handleDelete() {
+    if (!window.confirm(`Permanently delete "${book!.name}"? This will delete all chapters and reading data. This cannot be undone.`)) return
+    setLoading(true)
+    const result = await deleteBook(book!.id)
+    if (result.error) { setError(result.error); setLoading(false); return }
+    router.push('/admin/books')
   }
 
   async function handleArchiveToggle() {
@@ -79,6 +87,12 @@ export default function BookForm({ mode, book }: Props) {
           <button type="button" onClick={handleArchiveToggle} disabled={loading}
             className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted disabled:opacity-50 transition-colors">
             {book!.status === 'active' ? 'Archive' : 'Unarchive'}
+          </button>
+        )}
+        {mode === 'edit' && (
+          <button type="button" onClick={handleDelete} disabled={loading}
+            className="rounded-lg border border-destructive/40 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50 transition-colors ml-auto">
+            Delete
           </button>
         )}
       </div>
