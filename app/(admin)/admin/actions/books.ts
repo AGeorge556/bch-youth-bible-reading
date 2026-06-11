@@ -1,4 +1,4 @@
-﻿'use server'
+'use server'
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -6,14 +6,14 @@ import { revalidatePath } from 'next/cache'
 export async function createBook(formData: FormData): Promise<{ bookId?: string; error?: string }> {
   const supabase = await createClient()
   const name = (formData.get('name') as string).trim()
-  if (!name) return { error: 'Book name is required' }
+  const start_date = (formData.get('start_date') as string) || null
+  const end_date = (formData.get('end_date') as string) || null
 
-  const { data: existing } = await supabase
-    .from('books').select('display_order').order('display_order', { ascending: false }).limit(1).maybeSingle()
-  const display_order = (existing?.display_order ?? -1) + 1
+  if (!name) return { error: 'Book name is required' }
+  if (start_date && end_date && start_date >= end_date) return { error: 'End date must be after start date' }
 
   const { data, error } = await supabase
-    .from('books').insert({ name, display_order }).select('id').single()
+    .from('books').insert({ name, start_date, end_date }).select('id').single()
   if (error) return { error: error.message }
   revalidatePath('/admin/books')
   return { bookId: data.id }
@@ -22,32 +22,26 @@ export async function createBook(formData: FormData): Promise<{ bookId?: string;
 export async function updateBook(bookId: string, formData: FormData): Promise<{ error?: string }> {
   const supabase = await createClient()
   const name = (formData.get('name') as string).trim()
-  const display_order = parseInt(formData.get('display_order') as string) || 0
+  const start_date = (formData.get('start_date') as string) || null
+  const end_date = (formData.get('end_date') as string) || null
+
   if (!name) return { error: 'Book name is required' }
+  if (start_date && end_date && start_date >= end_date) return { error: 'End date must be after start date' }
 
   const { error } = await supabase.from('books')
-    .update({ name, display_order, updated_at: new Date().toISOString() }).eq('id', bookId)
+    .update({ name, start_date, end_date, updated_at: new Date().toISOString() }).eq('id', bookId)
   if (error) return { error: error.message }
-  revalidatePath('/admin/books')
-  revalidatePath('/admin/books/' + bookId)
-  return {}
-}
 
-export async function archiveBook(bookId: string): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { error } = await supabase.from('books')
-    .update({ status: 'archived', updated_at: new Date().toISOString() }).eq('id', bookId)
-  if (error) return { error: error.message }
-  revalidatePath('/admin/books')
-  revalidatePath('/admin/books/' + bookId)
-  return {}
-}
+  // Auto-sync Chapter 1 unlock_date to book start_date
+  if (start_date) {
+    const { data: ch1 } = await supabase.from('chapters')
+      .select('id').eq('book_id', bookId).eq('chapter_number', 1).maybeSingle()
+    if (ch1) {
+      await supabase.from('chapters')
+        .update({ unlock_date: start_date, updated_at: new Date().toISOString() }).eq('id', ch1.id)
+    }
+  }
 
-export async function unarchiveBook(bookId: string): Promise<{ error?: string }> {
-  const supabase = await createClient()
-  const { error } = await supabase.from('books')
-    .update({ status: 'active', updated_at: new Date().toISOString() }).eq('id', bookId)
-  if (error) return { error: error.message }
   revalidatePath('/admin/books')
   revalidatePath('/admin/books/' + bookId)
   return {}

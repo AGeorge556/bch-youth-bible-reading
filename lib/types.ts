@@ -12,8 +12,8 @@ export interface Profile {
 export interface Book {
   id: string
   name: string
-  status: 'active' | 'archived'
-  display_order: number
+  start_date: string | null
+  end_date: string | null
   created_at: string
   updated_at: string
 }

@@ -1,13 +1,13 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createBook, updateBook, archiveBook, unarchiveBook, deleteBook } from '@/app/(admin)/admin/actions/books'
+import { createBook, updateBook, deleteBook } from '@/app/(admin)/admin/actions/books'
 import { BIBLE_BOOKS } from '@/lib/bible-books'
 
 interface Props {
   mode: 'create' | 'edit'
-  book?: { id: string; name: string; display_order: number; status: 'active' | 'archived' }
+  book?: { id: string; name: string; start_date: string | null; end_date: string | null }
 }
 
 export default function BookForm({ mode, book }: Props) {
@@ -40,19 +40,6 @@ export default function BookForm({ mode, book }: Props) {
     router.push('/admin/books')
   }
 
-  async function handleArchiveToggle() {
-    const isActive = book!.status === 'active'
-    const msg = isActive
-      ? 'Archive "' + book!.name + '"? Youth will no longer be able to mark new chapters. You can unarchive later.'
-      : 'Unarchive "' + book!.name + '"? It will become active again.'
-    if (!window.confirm(msg)) return
-    setLoading(true)
-    const result = isActive ? await archiveBook(book!.id) : await unarchiveBook(book!.id)
-    if (result.error) { setError(result.error); setLoading(false); return }
-    router.refresh()
-    setLoading(false)
-  }
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
@@ -70,25 +57,25 @@ export default function BookForm({ mode, book }: Props) {
           ))}
         </select>
       </div>
-      {mode === 'edit' && (
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label htmlFor="display-order" className="text-sm font-medium">Display Order</label>
-          <input id="display-order" name="display_order" type="number" defaultValue={book?.display_order}
-            className="w-20 rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-          <p className="text-xs text-muted-foreground">Lower = appears first.</p>
+          <label htmlFor="start-date" className="text-sm font-medium">Start Date</label>
+          <input id="start-date" name="start_date" type="date" defaultValue={book?.start_date ?? ''}
+            className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+          <p className="text-xs text-muted-foreground">Auto-sets Chapter 1 unlock date.</p>
         </div>
-      )}
+        <div className="space-y-1">
+          <label htmlFor="end-date" className="text-sm font-medium">End Date</label>
+          <input id="end-date" name="end_date" type="date" defaultValue={book?.end_date ?? ''}
+            className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+          <p className="text-xs text-muted-foreground">Extend to reopen a completed book.</p>
+        </div>
+      </div>
       <div className="flex items-center gap-3 pt-2">
         <button type="submit" disabled={loading}
           className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity">
           {loading ? 'Saving…' : mode === 'create' ? 'Create Book' : 'Save Changes'}
         </button>
-        {mode === 'edit' && (
-          <button type="button" onClick={handleArchiveToggle} disabled={loading}
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted disabled:opacity-50 transition-colors">
-            {book!.status === 'active' ? 'Archive' : 'Unarchive'}
-          </button>
-        )}
         {mode === 'edit' && (
           <button type="button" onClick={handleDelete} disabled={loading}
             className="rounded-lg border border-destructive/40 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-50 transition-colors ml-auto">

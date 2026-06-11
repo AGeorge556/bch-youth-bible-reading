@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
+import { type BookStatus } from '@/lib/utils/chapters'
 import ChapterClient from './ChapterClient'
 
 interface Question { id: string; question_text: string; order_index: number }
@@ -13,7 +14,7 @@ interface Props {
   chapterNumber: number
   chapterTitle: string | null
   posterUrl: string | null
-  isArchived: boolean
+  bookStatus: BookStatus
   questions: Question[]
   initialAnswers: Record<string, string>
   isReadInitially: boolean
@@ -21,7 +22,7 @@ interface Props {
 
 export default function ChapterPageContent({
   bookId, bookName, chapterId, chapterNumber, chapterTitle, posterUrl,
-  isArchived, questions, initialAnswers, isReadInitially,
+  bookStatus, questions, initialAnswers, isReadInitially,
 }: Props) {
   const { t } = useLanguage()
 
@@ -33,7 +34,7 @@ export default function ChapterPageContent({
           {t('chapter')} {chapterNumber}{chapterTitle ? ' — ' + chapterTitle : ''}
         </h1>
       </div>
-      {isArchived ? (
+      {bookStatus === 'completed' ? (
         <div className="space-y-4">
           {posterUrl && (
             <img src={posterUrl} alt="Chapter poster" className="w-full rounded-xl object-contain border border-border bg-muted max-h-80" />

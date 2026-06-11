@@ -24,9 +24,16 @@ export async function createChapter(
 ): Promise<{ chapterId?: string; error?: string }> {
   const supabase = await createClient()
 
+  // Chapter 1 unlock_date is always synced to book start_date
+  let unlock_date = data.unlock_date
+  if (data.chapter_number === 1) {
+    const { data: book } = await supabase.from('books').select('start_date').eq('id', bookId).single()
+    if (book?.start_date) unlock_date = book.start_date
+  }
+
   const { data: chapter, error } = await supabase
     .from('chapters')
-    .insert({ book_id: bookId, chapter_number: data.chapter_number, title: data.title || null, unlock_date: data.unlock_date, poster_url: data.poster_url })
+    .insert({ book_id: bookId, chapter_number: data.chapter_number, title: data.title || null, unlock_date, poster_url: data.poster_url })
     .select('id').single()
   if (error) return { error: error.message }
 
@@ -48,9 +55,16 @@ export async function updateChapter(
 ): Promise<{ error?: string }> {
   const supabase = await createClient()
 
+  // Chapter 1 unlock_date is always synced to book start_date
+  let unlock_date = data.unlock_date
+  if (data.chapter_number === 1) {
+    const { data: book } = await supabase.from('books').select('start_date').eq('id', bookId).single()
+    if (book?.start_date) unlock_date = book.start_date
+  }
+
   const { error } = await supabase.from('chapters').update({
     chapter_number: data.chapter_number, title: data.title || null,
-    unlock_date: data.unlock_date, poster_url: data.poster_url,
+    unlock_date, poster_url: data.poster_url,
     updated_at: new Date().toISOString(),
   }).eq('id', chapterId)
   if (error) return { error: error.message }

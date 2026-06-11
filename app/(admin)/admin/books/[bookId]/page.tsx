@@ -7,7 +7,7 @@ import Link from 'next/link'
 export default async function AdminBookDetailPage({ params }: { params: Promise<{ bookId: string }> }) {
   const { bookId } = await params
   const supabase = await createClient()
-  const { data: book } = await supabase.from('books').select('id,name,status,display_order').eq('id', bookId).single()
+  const { data: book } = await supabase.from('books').select('id,name,start_date,end_date').eq('id', bookId).single()
   if (!book) notFound()
   const { data: chapters } = await supabase.from('chapters')
     .select('id,chapter_number,title,unlock_date').eq('book_id', bookId).order('chapter_number')

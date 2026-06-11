@@ -58,6 +58,11 @@ export const translations = {
     program_ended_locked: 'This program has ended. Reading and answers are locked.',
     your_answers: 'Your Answers',
     sign_out: 'Sign out',
+    upcoming: 'Upcoming',
+    completed: 'Completed',
+    book_upcoming_notice: "This reading program hasn't started yet.",
+    start_date: 'Start Date',
+    end_date: 'End Date',
   },
   ar: {
     welcome_back: 'أهلاً،',
@@ -118,6 +123,11 @@ export const translations = {
     program_ended_locked: 'البرنامج ده خلص. القراية والإجابات اتقفلت.',
     your_answers: 'إجاباتك',
     sign_out: 'اخرج',
+    upcoming: 'قادم',
+    completed: 'منتهي',
+    book_upcoming_notice: 'البرنامج ده لسه مابدأش.',
+    start_date: 'تاريخ البداية',
+    end_date: 'تاريخ النهاية',
   },
 } as const
 

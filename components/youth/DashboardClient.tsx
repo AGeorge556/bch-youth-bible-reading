@@ -7,7 +7,7 @@ import BadgeCard from './BadgeCard'
 interface TodayChapter { id: string; chapter_number: number; title: string | null }
 interface ActiveBook { id: string; name: string }
 interface UserBadge { id: string; awarded_at: string; badge: unknown; book: unknown }
-interface Book { id: string; name: string; status: string }
+interface Book { id: string; name: string; bookStatus: 'active' | 'upcoming' | 'completed' }
 
 interface Props {
   profileName: string | null
@@ -95,13 +95,14 @@ export default function DashboardClient({
             {books.map(bk => (
               <Link key={bk.id} href={'/books/' + bk.id}
                 className={'flex items-center justify-between rounded-2xl border px-4 py-3 hover:scale-[1.01] transition-all ' +
-                  (bk.status === 'active'
+                  (bk.bookStatus === 'active'
                     ? 'bg-gradient-to-r from-purple-50 to-transparent border-purple-200'
                     : 'bg-card border-border')}>
                 <span className="font-semibold text-sm">{bk.name}</span>
                 <span className="flex items-center gap-2">
-                  {bk.status === 'active' && <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">{t('active')}</span>}
-                  {bk.status === 'archived' && <span className="text-xs text-muted-foreground">{t('past')}</span>}
+                  {bk.bookStatus === 'active' && <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">{t('active')}</span>}
+                  {bk.bookStatus === 'upcoming' && <span className="text-xs border border-border text-muted-foreground px-2 py-0.5 rounded-full">{t('upcoming')}</span>}
+                  {bk.bookStatus === 'completed' && <span className="text-xs text-muted-foreground">{t('past')}</span>}
                   <span className="text-muted-foreground text-sm">→</span>
                 </span>
               </Link>

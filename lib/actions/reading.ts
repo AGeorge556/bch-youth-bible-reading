@@ -1,6 +1,7 @@
-﻿'use server'
+'use server'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getBookStatus, getTodayUTC } from '@/lib/utils/chapters'
 
 export type MarkChapterReadResult =
   | { success: false; error: string }
@@ -12,12 +13,17 @@ export async function markChapterRead(chapterId: string): Promise<MarkChapterRea
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
+  const { data: chapter } = await supabase.from('chapters').select('book_id').eq('id', chapterId).single()
+  if (!chapter) return { success: false, error: 'Chapter not found' }
+
+  const { data: book } = await supabase.from('books').select('start_date,end_date,name').eq('id', chapter.book_id).single()
+  if (getBookStatus(book?.start_date ?? null, book?.end_date ?? null, getTodayUTC()) !== 'active') {
+    return { success: false, error: 'Reading is only available during the active program period.' }
+  }
+
   const { error: insertError } = await supabase.from('reading_progress')
     .upsert({ user_id: user.id, chapter_id: chapterId }, { onConflict: 'user_id,chapter_id', ignoreDuplicates: true })
   if (insertError) return { success: false, error: insertError.message }
-
-  const { data: chapter } = await supabase.from('chapters').select('book_id').eq('id', chapterId).single()
-  if (!chapter) { revalidatePath('/', 'layout'); return { success: true, badgeAwarded: false } }
 
   const bookId = chapter.book_id
   const { data: bookChapters } = await supabase.from('chapters').select('id').eq('book_id', bookId)
@@ -38,7 +44,6 @@ export async function markChapterRead(chapterId: string): Promise<MarkChapterRea
   await supabase.from('user_badges')
     .upsert({ user_id: user.id, badge_id: badge.id, book_id: bookId }, { onConflict: 'user_id,badge_id,book_id', ignoreDuplicates: true })
 
-  const { data: book } = await supabase.from('books').select('name').eq('id', bookId).single()
   revalidatePath('/', 'layout')
   return { success: true, badgeAwarded: true, bookName: book?.name ?? 'this book' }
 }
@@ -47,6 +52,15 @@ export async function saveAnswers(chapterId: string, answers: { questionId: stri
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
+
+  const { data: chapter } = await supabase.from('chapters').select('book_id').eq('id', chapterId).single()
+  if (!chapter) return { error: 'Chapter not found' }
+
+  const { data: book } = await supabase.from('books').select('start_date,end_date').eq('id', chapter.book_id).single()
+  if (getBookStatus(book?.start_date ?? null, book?.end_date ?? null, getTodayUTC()) !== 'active') {
+    return { error: 'Answers can only be submitted during the active program period.' }
+  }
+
   const rows = answers.filter(a => a.answerText.trim()).map(a => ({
     user_id: user.id, question_id: a.questionId, chapter_id: chapterId, answer_text: a.answerText.trim(),
   }))
